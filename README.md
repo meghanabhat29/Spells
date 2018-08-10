@@ -1,1 +1,1 @@
-#Spells - Find details about your favourite tv show.
+# Spells - Find details about your favourite tv show.
