@@ -10,8 +10,10 @@ INFOBOX_ITEMS_TAG = "tr"
 CONTENT_SAPERATOR = "\n"
 LOG_FILE_NAME = "logs.txt"
 SHOW_DETAILS_COLLECTION_NAME = "series_details"
+SHOW_DETAILS_FILE_NAME = "output.json"
 crapLinkTitleList = ['Wikipedia:Link rot',]
-listed_tags = ['Created by','Starring','Executive producer(s)','Production company(s)']
+listed_tags = ['Created by','Starring','Executive producer(s)','Production company(s)','Past members']
+
 
 def isNoneObject(checkObj):
     return (checkObj is None)
@@ -55,10 +57,16 @@ def getFilteredElementInSoup(soupedData,filterDictionary):
     return soupedData.find(filterDictionary['tag'],{filterDictionary['attribute']:filterDictionary['attributeValue']})
 
 def getUrlSoup(url):
-    with urllib.request.urlopen(url) as response:
-         html = response.read()
-         tvShowListsoup = BeautifulSoup(html, 'lxml')
-         return tvShowListsoup
+    tvShowListsoup = None
+    try:
+        with urllib.request.urlopen(url) as response:
+            page_status = response.status
+            if page_status == 200:
+                html = response.read()
+                tvShowListsoup = BeautifulSoup(html, 'lxml')
+            return tvShowListsoup
+    except:
+        return tvShowListsoup
 
 def getTvShowList(soupedData):
     tvShowList = list()
@@ -85,9 +93,6 @@ def get_show_entry_details(entry,existing_dict):
             if entry.td != None:
                 entry_value = str(entry.td.text).strip("\n")
                 existing_dict[entry_name] = entry_value
-            else:
-                existing_dict[entry_name] = ''
-        pprint(existing_dict)
         return existing_dict
     else:
         return existing_dict
@@ -101,16 +106,32 @@ def get_card_info(card_detail_soup):
     return entry_desc_dict
 
 def getShowDescriptiveInfoList(showLinkList):
+    # Card Filter Dictionaries
+    INFOBOX_VEVENT = getFilteredElementDictionary('table','class','infobox vevent')
+    INFOBOX = getFilteredElementDictionary('table','class','infobox')
+    INFOBOX_VPLAINLIST = getFilteredElementDictionary('table','class','infobox vcard plainlist')
+    
     for show in showLinkList:
         showPageSoup = getIndividualShowSoup(show['url'])
-        filteredElementDictionary = getFilteredElementDictionary('table','class','infobox vevent')
+        if showPageSoup == None:
+            continue
+
+        filteredElementDictionary = INFOBOX_VEVENT
         showInfoCardSoup = getFilteredElementInSoup(showPageSoup,filteredElementDictionary)
+
+        if showInfoCardSoup == None:
+            filteredElementDictionary = INFOBOX
+            showInfoCardSoup = getFilteredElementInSoup(showPageSoup,filteredElementDictionary)
+
+        if showInfoCardSoup == None:
+            filteredElementDictionary = INFOBOX_VPLAINLIST
+            showInfoCardSoup = getFilteredElementInSoup(showPageSoup,filteredElementDictionary)
 
         if isCardExist(showInfoCardSoup,filteredElementDictionary,show['url']):
             allShowCardDetails = getAllElementsInsoup(showInfoCardSoup,INFOBOX_ITEMS_TAG)
             cleaned_card_detail = get_card_info(allShowCardDetails)
-            #write_to_db(SHOW_DETAILS_COLLECTION_NAME,allShowCardDetails)
-
+            #write_to_db(SHOW_DETAILS_COLLECTION_NAME,cleaned_card_detail)
+            writeToFile(cleaned_card_detail)
 
 def runGarbageCollector():
     gc.collect()
@@ -123,6 +144,10 @@ def write_to_db(collection_name,content):
     write_client = MongoClient('localhost', 27017)
     write_client_db = write_client.shows_db
     write_client_db.collection_name.insert_one(content)
+
+def writeToFile(content):
+    with open(SHOW_DETAILS_FILE_NAME, 'a') as filePointer:
+        filePointer.write( CONTENT_SAPERATOR + str(content))
 
 def displayDictList(showList):
     for show in showList:
