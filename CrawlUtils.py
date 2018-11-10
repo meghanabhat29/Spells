@@ -9,7 +9,6 @@ SHOW_URL_FORMAT = "https://en.wikipedia.org"
 INFOBOX_ITEMS_TAG = "tr"
 CONTENT_SAPERATOR = "\n"
 LOG_FILE_NAME = "logs.txt"
-SHOW_DETAILS_COLLECTION_NAME = "series_details"
 SHOW_DETAILS_FILE_NAME = "output.json"
 crapLinkTitleList = ['Wikipedia:Link rot',]
 listed_tags = ['Created by','Starring','Executive producer(s)','Production company(s)','Past members']
@@ -110,7 +109,7 @@ def getShowDescriptiveInfoList(showLinkList):
     INFOBOX_VEVENT = getFilteredElementDictionary('table','class','infobox vevent')
     INFOBOX = getFilteredElementDictionary('table','class','infobox')
     INFOBOX_VPLAINLIST = getFilteredElementDictionary('table','class','infobox vcard plainlist')
-    
+
     for show in showLinkList:
         showPageSoup = getIndividualShowSoup(show['url'])
         if showPageSoup == None:
@@ -130,8 +129,7 @@ def getShowDescriptiveInfoList(showLinkList):
         if isCardExist(showInfoCardSoup,filteredElementDictionary,show['url']):
             allShowCardDetails = getAllElementsInsoup(showInfoCardSoup,INFOBOX_ITEMS_TAG)
             cleaned_card_detail = get_card_info(allShowCardDetails)
-            #write_to_db(SHOW_DETAILS_COLLECTION_NAME,cleaned_card_detail)
-            writeToFile(cleaned_card_detail)
+            write_to_db(cleaned_card_detail)
 
 def runGarbageCollector():
     gc.collect()
@@ -140,10 +138,10 @@ def logExceptionsToFile(e,showUrl):
     with open(LOG_FILE_NAME, 'a') as filePointer:
         filePointer.write(CONTENT_SAPERATOR + str(e) + " at " + showUrl)
 
-def write_to_db(collection_name,content):
+def write_to_db(content):
     write_client = MongoClient('localhost', 27017)
     write_client_db = write_client.shows_db
-    write_client_db.collection_name.insert_one(content)
+    write_client_db.tv_series_details.insert(content,check_keys=False)
 
 def writeToFile(content):
     with open(SHOW_DETAILS_FILE_NAME, 'a') as filePointer:
