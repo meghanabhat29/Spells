@@ -1,2 +1,4 @@
-beautifulsoup4
-urllib
+bs4
+requests
+lxml
+pymongo

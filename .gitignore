@@ -1,1 +1,4 @@
+#Following files and folders will be ignored by git.
+__pycache__/
 .vscode
+*.pyc
