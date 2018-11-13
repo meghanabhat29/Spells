@@ -1,7 +1,7 @@
 import os
 from flask import Flask, session,render_template,request,redirect,url_for,jsonify
 from flask_session import Session
-from API.resource_fetch import get_all_shows
+from API.resource_fetch import get_all_shows, get_show_details
 
 app = Flask(__name__)
 
@@ -20,6 +20,7 @@ def list_show():
     all_show_list = get_all_shows()
     return jsonify(all_show_list)
 
-@app.route("/api/show/<string:show_name>/",methods=['GET'])
+@app.route("/api/show/<show_name>/",methods=['GET'])
 def display_show(show_name):
-    return jsonify()
+    tv_show_detail = get_show_details(show_name)
+    return jsonify(tv_show_detail)
