@@ -1,5 +1,6 @@
 #Following files and folders will be ignored by git.
 __pycache__/
+flask_session/
 .vscode
 *.pyc
 logs.txt
